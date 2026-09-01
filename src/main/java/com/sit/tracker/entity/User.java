@@ -20,6 +20,9 @@ public class User {
     @Column(name = "steam_id", length = 64)
     private String steamId;
 
+    @Column(name = "last_inventory_sync_at")
+    private LocalDateTime lastInventorySyncAt;
+
     @Column(name = "is_premium", nullable = false)
     private Boolean isPremium = false;
 

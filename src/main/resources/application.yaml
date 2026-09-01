@@ -54,6 +54,12 @@ app:
     thread-name-prefix: "sit-telegram-async-"
 
 resilience4j:
+  ratelimiter:
+    instances:
+      steamApiLimiter:
+        limit-for-period: 1
+        limit-refresh-period: 2s
+        timeout-duration: 10s
   retry:
     instances:
       steamApiRetry:

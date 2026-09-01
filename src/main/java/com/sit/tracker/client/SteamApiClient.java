@@ -3,6 +3,7 @@ package com.sit.tracker.client;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,12 @@ public class SteamApiClient {
         this.steamWebClient = steamWebClient;
     }
 
+    // RateLimiter caps how many requests per second leave OUR server toward
+    // Steam, regardless of how many users click "Sync" at the same moment —
+    // this is what actually protects against a burst of 100+ simultaneous
+    // clicks, since the per-user cooldown in InventoryService only prevents
+    // ONE user from re-triggering it, not many DIFFERENT users at once.
+    @RateLimiter(name = "steamApiLimiter")
     @Retry(name = "steamApiRetry", fallbackMethod = "fetchUserInventoryFallback")
     public Mono<SteamInventoryResponse> fetchUserInventory(String steamId) {
         String path = String.format("/inventory/%s/730/2?l=english&count=5000", steamId);

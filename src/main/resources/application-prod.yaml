@@ -16,7 +16,7 @@
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
@@ -42,7 +42,7 @@ app:
     webhook-secret: ${TELEGRAM_WEBHOOK_SECRET}
   steam:
     api-key: ${STEAM_API_KEY}
-    api-base-url: ${STEAM_API_BASE_URL:https://steamcommunity.com}
+    api-base-url: ${STEAM_API_BASE_URL:https://steampowered.com}
   price-aggregator:
     base-url: ${PRICE_AGGREGATOR_BASE_URL:https://csfloat.com}
   async:
@@ -52,6 +52,16 @@ app:
     thread-name-prefix: "sit-prod-async-"
 
 resilience4j:
+  ratelimiter:
+    instances:
+      steamApiLimiter:
+        # 1 request per 2 seconds leaves this server toward Steam, no matter
+        # how many users hit /sync-inventory concurrently. Requests beyond
+        # that queue for up to 10s waiting for a slot; anything past that
+        # times out and falls through to the normal retry/fallback path.
+        limit-for-period: 1
+        limit-refresh-period: 2s
+        timeout-duration: 10s
   retry:
     instances:
       steamApiRetry:

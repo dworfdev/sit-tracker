@@ -11,11 +11,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
+
+    // Server-side cooldown floor: enforced regardless of how many devices,
+    // tabs, or direct API calls a user makes — the client-side cooldown in
+    // app.js is only a UX nicety and is trivially bypassable.
+    private static final Duration SYNC_COOLDOWN = Duration.ofMinutes(5);
 
     private final UserRepository userRepository;
     private final TrackedItemRepository trackedItemRepository;
@@ -27,6 +34,24 @@ public class InventoryService {
                 .orElseGet(() -> userRepository.save(User.builder().id(userId).isPremium(false).build()));
         user.setSteamId(steamId);
         userRepository.save(user);
+    }
+
+    /**
+     * Throws IllegalStateException if the user is still within their sync
+     * cooldown window. Callers should check this before hitting Steam.
+     */
+    public void assertSyncAllowed(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.getLastInventorySyncAt() != null) {
+            Duration elapsed = Duration.between(user.getLastInventorySyncAt(), LocalDateTime.now());
+            if (elapsed.compareTo(SYNC_COOLDOWN) < 0) {
+                long secondsLeft = SYNC_COOLDOWN.minus(elapsed).getSeconds();
+                throw new IllegalStateException(
+                        "Please wait " + secondsLeft + "s before syncing your inventory again.");
+            }
+        }
     }
 
     @Transactional
@@ -56,6 +81,9 @@ public class InventoryService {
                             )
                     );
         }
+
+        user.setLastInventorySyncAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 
     @Transactional(readOnly = true)

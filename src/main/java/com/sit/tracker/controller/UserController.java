@@ -51,6 +51,13 @@ public class UserController {
             @RequestHeader("X-Telegram-Init-Data") String initData,
             @RequestParam String steamId) {
         Long userId = authService.extractUserId(initData);
+
+        // Server-side cooldown check — cannot be bypassed by refreshing the
+        // page, using another device, or calling the API directly, unlike
+        // the client-side cooldown in app.js. Throws IllegalStateException,
+        // caught below and returned as 429.
+        inventoryService.assertSyncAllowed(userId);
+
         try {
             List<String> extractedItems = steamApiClient.fetchUserInventory(steamId)
                     .map(response -> {
@@ -86,8 +93,13 @@ public class UserController {
             ));
         } catch (Exception e) {
             log.error("Steam inventory sync failure for user {}: ", userId, e);
+
+            String message = e.getMessage() != null && e.getMessage().contains("429")
+                    ? "Steam is rate-limiting inventory requests right now. Please wait a few minutes before syncing again."
+                    : "Failed to process Steam inventory: " + e.getMessage();
+
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(Map.of("error", "Failed to process Steam inventory: " + e.getMessage()));
+                    .body(Map.of("error", message));
         }
     }
 
