@@ -42,7 +42,7 @@ app:
     webhook-secret: ${TELEGRAM_WEBHOOK_SECRET}
   steam:
     api-key: ${STEAM_API_KEY}
-    api-base-url: ${STEAM_API_BASE_URL:https://steampowered.com}
+    api-base-url: ${STEAM_API_BASE_URL:https://steamcommunity.com}
   price-aggregator:
     base-url: ${PRICE_AGGREGATOR_BASE_URL:https://csfloat.com}
   async:
