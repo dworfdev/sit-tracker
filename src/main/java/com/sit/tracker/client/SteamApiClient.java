@@ -42,26 +42,27 @@ public class SteamApiClient {
 
     // Fallback handler triggered when resilience retry limits are exceeded
     public Mono<SteamInventoryResponse> fetchUserInventoryFallback(String steamId, Throwable throwable) {
-        log.error("Resilience4j fallback triggered for steamId {}. Reason: {}", steamId, throwable.getMessage());
-        return Mono.just(new SteamInventoryResponse(Collections.emptyList(), 0));
+        log.error("Resilience4j fallback triggered for steamId {}. Reason: {}", steamId, throwable.getMessage(), throwable);
+        return Mono.just(new SteamInventoryResponse(Collections.emptyList(), Collections.emptyList(), 0));
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SteamInventoryResponse {
         @JsonProperty("assets")
-        private List<SteamAsset> assets; // <-- Добавляем
+        private List<SteamAsset> assets = Collections.emptyList();
 
         @JsonProperty("descriptions")
-        private List<SteamItemDescription> descriptions;
+        private List<SteamItemDescription> descriptions = Collections.emptyList();
 
         @JsonProperty("total_inventory_count")
         private int totalInventoryCount;
 
         public SteamInventoryResponse() {}
 
-        public SteamInventoryResponse(List<SteamItemDescription> descriptions, int totalInventoryCount) {
-            this.descriptions = descriptions;
+        public SteamInventoryResponse(List<SteamAsset> assets, List<SteamItemDescription> descriptions, int totalInventoryCount) {
+            this.assets = assets != null ? assets : Collections.emptyList();
+            this.descriptions = descriptions != null ? descriptions : Collections.emptyList();
             this.totalInventoryCount = totalInventoryCount;
         }
     }

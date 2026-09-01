@@ -85,7 +85,7 @@ public class UserController {
                     "itemsSynced", String.valueOf(extractedItems.size())
             ));
         } catch (Exception e) {
-            log.error("Steam inventory sync failure for user {}: {}", userId, e.getMessage());
+            log.error("Steam inventory sync failure for user {}: ", userId, e);
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                     .body(Map.of("error", "Failed to process Steam inventory: " + e.getMessage()));
         }
