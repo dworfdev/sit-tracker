@@ -26,7 +26,7 @@ public class SteamApiClient {
 
     @Retry(name = "steamApiRetry", fallbackMethod = "fetchUserInventoryFallback")
     public Mono<SteamInventoryResponse> fetchUserInventory(String steamId) {
-        String path = String.format("/inventory/%s/730/2?l=english&count=5000", steamId);
+        String path = String.format("/inventory/%s/730/2", steamId);
 
         return steamWebClient.get()
                 .uri(path)
