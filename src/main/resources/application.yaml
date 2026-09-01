@@ -33,8 +33,7 @@ spring:
 # Custom API Integration Credentials placeholder
 app:
   steam:
-    api-key: "YOUR_STEAM_API_KEY_HERE"
-    api-base-url: "https://steampowered.com"
+    api-base-url: "https://steamcommunity.com"
   price-aggregator:
     base-url: "https://csfloat.com"
   telegram:

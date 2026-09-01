@@ -41,8 +41,11 @@ app:
     mini-app-web-url: ${MINI_APP_WEB_URL}
     webhook-secret: ${TELEGRAM_WEBHOOK_SECRET}
   steam:
-    api-key: ${STEAM_API_KEY}
-    api-base-url: ${STEAM_API_BASE_URL:https://steampowered.com}
+    api-base-url: ${STEAM_API_BASE_URL:https://steamcommunity.com}
+    proxy-host: ${STEAM_PROXY_HOST:}
+    proxy-port: ${STEAM_PROXY_PORT:0}
+    proxy-username: ${STEAM_PROXY_USERNAME:}
+    proxy-password: ${STEAM_PROXY_PASSWORD:}
   price-aggregator:
     base-url: ${PRICE_AGGREGATOR_BASE_URL:https://csfloat.com}
   async:
