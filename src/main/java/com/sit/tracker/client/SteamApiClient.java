@@ -26,7 +26,7 @@ public class SteamApiClient {
 
     @Retry(name = "steamApiRetry", fallbackMethod = "fetchUserInventoryFallback")
     public Mono<SteamInventoryResponse> fetchUserInventory(String steamId) {
-        String path = String.format("/inventory/%s/730/2", steamId);
+        String path = String.format("/inventory/%s/730/2?l=english", steamId);
 
         return steamWebClient.get()
                 .uri(path)
@@ -49,6 +49,9 @@ public class SteamApiClient {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SteamInventoryResponse {
+        @JsonProperty("assets")
+        private List<SteamAsset> assets; // <-- Добавляем
+
         @JsonProperty("descriptions")
         private List<SteamItemDescription> descriptions;
 
@@ -65,12 +68,25 @@ public class SteamApiClient {
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SteamAsset {
+        @JsonProperty("classid")
+        private String classId;
+
+        @JsonProperty("instanceid")
+        private String instanceId;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SteamItemDescription {
         @JsonProperty("appid")
         private int appId;
 
         @JsonProperty("classid")
         private String classId;
+
+        @JsonProperty("instanceid")
+        private String instanceId;
 
         @JsonProperty("market_hash_name")
         private String marketHashName;

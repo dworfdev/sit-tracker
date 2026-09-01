@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -51,14 +52,24 @@ public class UserController {
             @RequestParam String steamId) {
         Long userId = authService.extractUserId(initData);
         try {
-            // Directly consuming typed reactive model and transforming to market hash names
             List<String> extractedItems = steamApiClient.fetchUserInventory(steamId)
                     .map(response -> {
-                        if (response == null || response.getDescriptions() == null) {
+                        if (response == null || response.getAssets() == null || response.getDescriptions() == null) {
                             return Collections.<String>emptyList();
                         }
-                        return response.getDescriptions().stream()
-                                .map(SteamApiClient.SteamItemDescription::getMarketHashName)
+
+                        // 1. Собираем карту описаний: "classid_instanceid" -> market_hash_name
+                        Map<String, String> descMap = response.getDescriptions().stream()
+                                .filter(d -> d.getMarketHashName() != null)
+                                .collect(Collectors.toMap(
+                                        d -> d.getClassId() + "_" + d.getInstanceId(),
+                                        SteamApiClient.SteamItemDescription::getMarketHashName,
+                                        (existing, replacement) -> existing
+                                ));
+
+                        // 2. Для каждого ассета достаем его реальное имя из карты
+                        return response.getAssets().stream()
+                                .map(asset -> descMap.get(asset.getClassId() + "_" + asset.getInstanceId()))
                                 .filter(Objects::nonNull)
                                 .toList();
                     })
