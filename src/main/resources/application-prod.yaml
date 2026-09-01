@@ -1,0 +1,75 @@
+﻿spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${JDBC_DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      pool-name: SIT-HikariCP-Pool
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+app:
+  telegram:
+    bot-token: ${TELEGRAM_BOT_TOKEN}
+    # Deep link format (t.me/...) — used for plain <a href> links inside
+    # AlertService push notifications. Opens the Mini App when tapped.
+    mini-app-deeplink: ${TELEGRAM_MINI_APP_DEEPLINK:https://t.me/YourBotName/app}
+    # Real hosted HTTPS URL of the frontend — used for the native `web_app`
+    # inline keyboard button dispatched by TelegramWebhookController's /start
+    # handler. This MUST be your actual production frontend domain, not a
+    # t.me address, or Telegram's WebView will fail to open it.
+    mini-app-web-url: ${MINI_APP_WEB_URL}
+    webhook-secret: ${TELEGRAM_WEBHOOK_SECRET}
+  steam:
+    api-key: ${STEAM_API_KEY}
+    api-base-url: ${STEAM_API_BASE_URL:https://steampowered.com}
+  price-aggregator:
+    base-url: ${PRICE_AGGREGATOR_BASE_URL:https://csfloat.com}
+  async:
+    core-pool-size: 8
+    max-pool-size: 20
+    queue-capacity: 1000
+    thread-name-prefix: "sit-prod-async-"
+
+resilience4j:
+  retry:
+    instances:
+      steamApiRetry:
+        max-attempts: 3
+        wait-duration: 2s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+      priceApiRetry:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json

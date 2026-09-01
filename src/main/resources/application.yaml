@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: tracker #Previously steam-inventory-tracker
+  task:
+    scheduling:
+      pool:
+        size: 2
+      thread-name-prefix: "sit-cron-"
+
+  # Temporary H2 Database Configuration
+  datasource:
+    url: jdbc:h2:mem:sitdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+
+  # Web-Based H2 Admin Interface
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # Auto-generate Schema for Rapid Prototype Phase
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# Custom API Integration Credentials placeholder
+app:
+  steam:
+    api-key: "YOUR_STEAM_API_KEY_HERE"
+    api-base-url: "https://steampowered.com"
+  price-aggregator:
+    base-url: "https://csfloat.com"
+  telegram:
+    bot-token: "YOUR_TELEGRAM_BOT_TOKEN_HERE"
+    # Deep link format — used in AlertService's <a href> push notification links.
+    mini-app-deeplink: "https://t.me/YourBotName/app"
+    # Real hosted HTTPS URL of the frontend — used for the /start web_app button.
+    # Local dev has no public HTTPS frontend by default; if testing the /start
+    # button against a real device, point this at an ngrok/tunnel HTTPS URL
+    # forwarding to your local frontend, or your deployed dev environment.
+    mini-app-web-url: "https://REPLACE_WITH_DEV_TUNNEL_OR_DEV_DOMAIN"
+    webhook-secret: "super_secret_webhook_token_123"
+  async:
+    core-pool-size: 4
+    max-pool-size: 10
+    queue-capacity: 500
+    thread-name-prefix: "sit-telegram-async-"
+
+resilience4j:
+  retry:
+    instances:
+      steamApiRetry:
+        max-attempts: 3
+        wait-duration: 2s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+      priceApiRetry:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
