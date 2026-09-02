@@ -33,7 +33,8 @@ spring:
 # Custom API Integration Credentials placeholder
 app:
   steam:
-    api-base-url: "https://steamcommunity.com"
+    proxy-base-url: "http://localhost:3000"
+    proxy-internal-secret: ""
   price-aggregator:
     base-url: "https://csfloat.com"
   telegram:

@@ -16,7 +16,7 @@
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
@@ -41,11 +41,8 @@ app:
     mini-app-web-url: ${MINI_APP_WEB_URL}
     webhook-secret: ${TELEGRAM_WEBHOOK_SECRET}
   steam:
-    api-base-url: ${STEAM_API_BASE_URL:https://steamcommunity.com}
-    proxy-host: ${STEAM_PROXY_HOST:}
-    proxy-port: ${STEAM_PROXY_PORT:0}
-    proxy-username: ${STEAM_PROXY_USERNAME:}
-    proxy-password: ${STEAM_PROXY_PASSWORD:}
+    proxy-base-url: ${STEAM_PROXY_BASE_URL}
+    proxy-internal-secret: ${STEAM_PROXY_INTERNAL_SECRET}
   price-aggregator:
     base-url: ${PRICE_AGGREGATOR_BASE_URL:https://csfloat.com}
   async:

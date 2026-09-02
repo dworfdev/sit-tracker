@@ -2,7 +2,6 @@ package com.sit.tracker.client;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.Data;
@@ -21,7 +20,6 @@ import java.util.List;
 public class SteamApiClient {
 
     private final WebClient steamWebClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public SteamApiClient(@Qualifier("steamWebClient") WebClient steamWebClient) {
         this.steamWebClient = steamWebClient;
@@ -35,17 +33,12 @@ public class SteamApiClient {
     @RateLimiter(name = "steamApiLimiter")
     @Retry(name = "steamApiRetry", fallbackMethod = "fetchUserInventoryFallback")
     public Mono<SteamInventoryResponse> fetchUserInventory(String steamId) {
-        String path = String.format("/inventory/%s/730/2?l=english&count=5000", steamId);
+        // Talks to our own Node proxy now (see /steam-proxy), which fetches
+        // from Steam on our behalf and already handles the count-param bug,
+        // the private/empty-inventory null-body case, and TLS-fingerprint
+        // blocking. Route shape is ours to define — kept simple.
+        String path = String.format("/inventory/%s", steamId);
 
-        // TEMPORARY DIAGNOSTIC: read the body as a raw String first and log it
-        // in full, instead of letting WebClient deserialize straight into
-        // SteamInventoryResponse. Direct deserialization can silently coerce
-        // a shape mismatch into empty lists (fields default to
-        // Collections.emptyList() and unknown properties are ignored), which
-        // is indistinguishable from "Steam genuinely returned nothing." This
-        // makes the raw upstream response visible in logs either way, so we
-        // can tell whether the fault is upstream (Steam/network) or in our
-        // own mapping logic in UserController.
         return steamWebClient.get()
                 .uri(path)
                 .retrieve()
@@ -55,21 +48,7 @@ public class SteamApiClient {
                     }
                     return response.createException();
                 })
-                .bodyToMono(String.class)
-                .doOnNext(raw -> log.info(
-                        "RAW Steam inventory response for steamId {} ({} chars): {}",
-                        steamId,
-                        raw.length(),
-                        raw.length() > 2000 ? raw.substring(0, 2000) + "...[truncated]" : raw
-                ))
-                .map(raw -> {
-                    try {
-                        return objectMapper.readValue(raw, SteamInventoryResponse.class);
-                    } catch (Exception e) {
-                        log.error("Failed to deserialize Steam inventory JSON for steamId {}: {}", steamId, e.getMessage());
-                        throw new RuntimeException("Steam inventory JSON parse failure: " + e.getMessage(), e);
-                    }
-                });
+                .bodyToMono(SteamInventoryResponse.class);
     }
 
     // Fallback handler triggered when resilience retry limits are exceeded.
